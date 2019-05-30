@@ -10,4 +10,15 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClientService.Infrastructure\ClientService.Infrastructure.csproj" />
+    <ProjectReference Include="..\ClientService.Core\ClientService.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <None Update="appsettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+  </ItemGroup>    
 </Project>
