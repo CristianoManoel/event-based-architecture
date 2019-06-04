@@ -1,7 +1,8 @@
 using ClientService.Core.Entities;
-using ClientService.Core.Interfaces;
+using ClientService.Core.Interfaces.Events.Publishers;
 using ClientService.Infrastructure.Configurations;
 using Confluent.Kafka;
+using Newtonsoft.Json;
 
 namespace ClientService.Infrastructure.Kafka
 {
@@ -16,18 +17,12 @@ namespace ClientService.Infrastructure.Kafka
         }
         public async void PublishEvent(string topicName, string key, T data)
         {
-            var config = new ProducerConfig { BootstrapServers = KafkaOptions.BootstrapServers };
+            var config = new ProducerConfig { BootstrapServers = KafkaOptions.Producer.BootstrapServers };
 
-            try{
-            using (var producer = new ProducerBuilder<string, T>(config).Build())
+            using (var producer = new ProducerBuilder<string, string>(config).Build())
             {
-                var data1 = new Customer();
-                var deliveryReport = await producer.ProduceAsync(topicName, new Message<string, T> { Key = key, Value = data });
-            }
-            }
-            catch(Exception ex)
-            {
-                
+                var serializedData = JsonConvert.SerializeObject(data);
+                var deliveryReport = await producer.ProduceAsync(topicName, new Message<string, string> { Key = key, Value = serializedData });
             }
         }
     }

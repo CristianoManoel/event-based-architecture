@@ -1,4 +1,4 @@
-namespace ClientService.Core.Enums
+namespace ValidationService.Core.Enums
 {
     public enum RegisterStatus
     {

@@ -1,4 +1,4 @@
-namespace ClientService.Core.Interfaces
+namespace ClientService.Core.Interfaces.Events.Publishers
 {
     public interface IEventPublisher<T> 
     where T : class

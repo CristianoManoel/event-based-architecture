@@ -1,7 +1,7 @@
 using System;
-using ClientService.Core.Enums;
+using ValidationService.Core.Enums;
 
-namespace ClientService.Core.Entities
+namespace ValidationService.Core.Entities
 {
     public class Customer
     {
@@ -11,6 +11,6 @@ namespace ClientService.Core.Entities
 
         public string Cpf { get; set; }
 
-        public RegisterStatus RegisterStatus { get; set; }
+        public RegisterStatus RegisterStatus { get; set; } 
     }
 }

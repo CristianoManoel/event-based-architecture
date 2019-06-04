@@ -2,6 +2,8 @@
 using ClientService.Core.Entities;
 using ClientService.Core.Enums;
 using ClientService.Core.Interfaces;
+using ClientService.Core.Interfaces.Events.Handlers;
+using ClientService.Core.Interfaces.Events.Processors;
 using ClientService.Core.Interfaces.UseCases;
 using ClientService.Infrastructure.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
@@ -16,9 +18,13 @@ namespace ClientService.ConsoleApp
         {
             var configuration = BuildConfiguration();
             var serviceProvider = BuilderServiceProvider(configuration);
+            
+            var customerRegistryValidationEventHandler = serviceProvider.GetService<IEventHandler<Customer>>();
+            var customerRegistryValidatedEventProcessor = serviceProvider.GetService<ICustomerRegistryValidatedEventProcessor>();
+            customerRegistryValidationEventHandler.ConsumeEvents(nameof(Customer), customerRegistryValidatedEventProcessor);
+
+
             var registerCustomer = serviceProvider.GetService<IRegisterCustomer>();
-
-
             while (true)
             {
                 Console.WriteLine("Type the customer name and press enter");

@@ -1,9 +1,12 @@
 using ClientService.Core.Entities;
-using ClientService.Core.Interfaces;
+using ClientService.Core.Events.Processors;
+using ClientService.Core.Interfaces.Events.Handlers;
+using ClientService.Core.Interfaces.Events.Processors;
+using ClientService.Core.Interfaces.Events.Publishers;
 using ClientService.Core.Interfaces.UseCases;
 using ClientService.Core.UseCases;
 using ClientService.Infrastructure.Configurations;
-using ClientService.Infrastructure.Kafka;
+using @Kafka = ClientService.Infrastructure.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -20,7 +23,10 @@ namespace ClientService.Infrastructure.Extensions.DependencyInjection
         public static IServiceCollection Register(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddTransient<IRegisterCustomer, RegisterCustomer>();
-            serviceCollection.AddTransient<IEventPublisher<Customer>, EventPublisher<Customer>>();
+            serviceCollection.AddTransient<IEventPublisher<Customer>, @Kafka.EventPublisher<Customer>>();
+
+            serviceCollection.AddTransient<IEventHandler<Customer>, @Kafka.EventHandler<Customer>>();
+            serviceCollection.AddTransient<ICustomerRegistryValidatedEventProcessor, CustomerRegistryValidatedEventProcessor>();
 
             return serviceCollection;
         }

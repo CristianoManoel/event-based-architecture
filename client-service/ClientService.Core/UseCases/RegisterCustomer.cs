@@ -1,5 +1,5 @@
 using ClientService.Core.Entities;
-using ClientService.Core.Interfaces;
+using ClientService.Core.Interfaces.Events.Publishers;
 using ClientService.Core.Interfaces.UseCases;
 
 namespace ClientService.Core.UseCases
