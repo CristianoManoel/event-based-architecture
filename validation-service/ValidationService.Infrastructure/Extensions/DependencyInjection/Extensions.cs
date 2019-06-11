@@ -6,6 +6,7 @@ using ValidationService.Core.Entities;
 using ValidationService.Core.Events.Processors;
 using ValidationService.Core.Interfaces.Events.Handlers;
 using ValidationService.Core.Interfaces.Events.Processors;
+using ValidationService.Core.Interfaces.Events.Publishers;
 using ValidationService.Core.Interfaces.UseCases;
 using ValidationService.Core.UseCases;
 using ValidationService.Infrastructure.Configurations;
@@ -21,6 +22,7 @@ namespace ValidationService.Infrastructure.Extensions.DependencyInjection
             serviceCollection.AddTransient<ICustomerRegistryValidationUseCase, CustomerRegistryValidationUseCase>();
             serviceCollection.AddTransient<INewCustomerRegistryEventProcessor<Customer>, NewCustomerRegistryEventProcessor>();
             serviceCollection.AddTransient<IEventHandler<Customer>, @Kafka.EventHandler<Customer>>();
+            serviceCollection.AddTransient<IEventPublisher<Customer>, @Kafka.EventPublisher<Customer>>();
             
             return serviceCollection;
         }
