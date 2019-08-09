@@ -8,6 +8,7 @@ using ValidationService.Infrastructure.Extensions.DependencyInjection;
 
 namespace ValidationService.ConsoleApp
 {
+    // Consumer
     public class Program
     {
         public static void Main(string[] args)

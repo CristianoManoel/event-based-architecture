@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ClientService.ConsoleApp
 {
+    // Producer
     public class Program
     {
 
@@ -18,11 +19,6 @@ namespace ClientService.ConsoleApp
         {
             var configuration = BuildConfiguration();
             var serviceProvider = BuilderServiceProvider(configuration);
-            
-            var customerRegistryValidationEventHandler = serviceProvider.GetService<IEventHandler<Customer>>();
-            var customerRegistryValidatedEventProcessor = serviceProvider.GetService<ICustomerRegistryValidatedEventProcessor>();
-            customerRegistryValidationEventHandler.ConsumeEvents(nameof(Customer), customerRegistryValidatedEventProcessor);
-
 
             var registerCustomer = serviceProvider.GetService<IRegisterCustomer>();
             while (true)
