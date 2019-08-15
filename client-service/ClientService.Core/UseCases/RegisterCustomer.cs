@@ -1,20 +1,23 @@
 using ClientService.Core.Entities;
 using ClientService.Core.Interfaces.Events.Publishers;
 using ClientService.Core.Interfaces.UseCases;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ClientService.Core.UseCases
 {
     public class RegisterCustomer : IRegisterCustomer
     {
         private readonly IEventPublisher<Customer> eventPublisher;
+        
         public RegisterCustomer(IEventPublisher<Customer> eventStore)
         {
             this.eventPublisher = eventStore;
-
         }
-        public void Register(Customer customer)
+
+        public async Task Register(List<Customer> customers)
         {
-            eventPublisher.PublishEvent(nameof(Customer), customer.Id.ToString(), customer);
+            await eventPublisher.PublishEvent(nameof(Customer), customers);
         }
     }
 }

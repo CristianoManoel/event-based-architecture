@@ -9,10 +9,12 @@ namespace ValidationService.Infrastructure.Kafka
     where T : class
     {
         private readonly KafkaOptions KafkaOptions;
+
         public EventPublisher(KafkaOptions KafkaOptions)
         {
              this.KafkaOptions = KafkaOptions;
         }
+
         public async void PublishEvent(string topicName, string key, T data)
         {
             var config = new ProducerConfig { BootstrapServers = KafkaOptions.Producer.BootstrapServers };

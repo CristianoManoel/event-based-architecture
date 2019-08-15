@@ -16,7 +16,7 @@ namespace ValidationService.Core.UseCases
         public void Validate(Customer customer)
         {
             customer.RegisterStatus = Enums.RegisterStatus.Actived;
-            Console.Write($"New Customer:[{customer.Name}] registry validated.");
+            Console.WriteLine($"{customer.Id} = New Customer:[{customer.Name}] registry validated.");
             eventPublisher.PublishEvent(Topic, customer.Id.ToString(), customer);
         }
     }

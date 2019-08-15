@@ -11,13 +11,11 @@ namespace ValidationService.Core.Events.Processors
         public NewCustomerRegistryEventProcessor(ICustomerRegistryValidationUseCase customerRegistryValidationUseCase)
         {
             this.customerRegistryValidationUseCase = customerRegistryValidationUseCase;
-
         }
 
         public void Process(Customer data)
         {
             customerRegistryValidationUseCase.Validate(data);
-            
         }
     }
 }

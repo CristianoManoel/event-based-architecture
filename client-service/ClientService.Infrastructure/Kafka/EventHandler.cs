@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using ClientService.Core.Interfaces.Events.Handlers;
 using ClientService.Core.Interfaces.Events.Processors;
 using ClientService.Infrastructure.Configurations;
@@ -8,17 +9,16 @@ using Newtonsoft.Json;
 
 namespace ClientService.Infrastructure.Kafka
 {
-    public class EventHandler<T> : IEventHandler<T>
-    where T : class
+    public class EventHandler<T> : IEventHandler<T> where T : class
     {
-       private readonly KafkaOptions KafkaOptions;
+        private readonly KafkaOptions KafkaOptions;
 
         public EventHandler(KafkaOptions KafkaOptions)
         {
             this.KafkaOptions = KafkaOptions;
-
         }
-        public void ConsumeEvents(string topicName, IEventProcessor<T> eventProcessor)
+
+        public async Task ConsumeEvents(string topicName, IEventProcessor<T> eventProcessor)
         {
             var config = new ConsumerConfig
             {
@@ -30,6 +30,14 @@ namespace ClientService.Infrastructure.Kafka
                 MaxPollIntervalMs = 600000
             };
 
+            await Task.Run(() =>
+            {
+                Execute(config, topicName, eventProcessor);
+            });
+        }
+
+        private void Execute(ConsumerConfig config, string topicName, IEventProcessor<T> eventProcessor)
+        {
             using (var c = new ConsumerBuilder<string, string>(config).Build())
             {
                 c.Subscribe(topicName);
@@ -48,15 +56,16 @@ namespace ClientService.Infrastructure.Kafka
                         try
                         {
                             var cr = c.Consume();
-                            
-                            if(!cr.IsPartitionEOF){
+
+                            if (!cr.IsPartitionEOF)
+                            {
                                 // Console.WriteLine($"Event Data Consumed: '{cr.Value}' at: '{cr.TopicPartitionOffset}'.");
                                 var data = JsonConvert.DeserializeObject<T>(cr.Value);
                                 eventProcessor.Process(data);
                             }
                             else
                             {
-                                Console.WriteLine($"End of Partion Reached.");
+                                //Console.WriteLine($"End of Partion Reached.");
                             }
                         }
                         catch (ConsumeException e)

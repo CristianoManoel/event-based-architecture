@@ -31,8 +31,9 @@ namespace ValidationService.Infrastructure.Kafka
             };
 
             using (var c = new ConsumerBuilder<string, string>(config).Build())
-            {
+            {                
                 c.Subscribe(topicName);
+                // c.Seek(new TopicPartitionOffset(new TopicPartition(topicName, new Partition(0)), new Offset(0)));
 
                 CancellationTokenSource cts = new CancellationTokenSource();
                 Console.CancelKeyPress += (_, e) =>
@@ -48,15 +49,16 @@ namespace ValidationService.Infrastructure.Kafka
                         try
                         {
                             var cr = c.Consume();
-                            
-                            if(!cr.IsPartitionEOF){
+
+                            if (!cr.IsPartitionEOF)
+                            {
                                 // Console.WriteLine($"Event Data Consumed: '{cr.Value}' at: '{cr.TopicPartitionOffset}'.");
                                 var data = JsonConvert.DeserializeObject<T>(cr.Value);
                                 eventProcessor.Process(data);
                             }
                             else
                             {
-                                Console.WriteLine($"End of Partion Reached.");
+                                //Console.WriteLine($"End of Partion Reached.");
                             }
                         }
                         catch (ConsumeException e)

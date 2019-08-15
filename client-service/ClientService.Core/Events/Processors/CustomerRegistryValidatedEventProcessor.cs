@@ -8,7 +8,7 @@ namespace ClientService.Core.Events.Processors
     {
         public void Process(Customer data)
         {
-            Console.WriteLine($"Costumer: [{data.Name}] registry validated with status: [{data.RegisterStatus}]");
+            Console.WriteLine($"Costumer validated: [{data.Name}] registry validated with status: [{data.RegisterStatus}]");
         }
     }
 }

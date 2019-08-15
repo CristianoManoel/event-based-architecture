@@ -12,6 +12,8 @@ namespace ValidationService.ConsoleApp
     {
         public static void Main(string[] args)
         {
+            Console.WriteLine($"Start consumidor");
+
             var configuration = BuildConfiguration();
             var serviceProvider = BuilderServiceProvider(configuration);
             var newCustomerRegistryEvenHandler = serviceProvider.GetService<IEventHandler<Customer>>();

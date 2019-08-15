@@ -1,8 +1,11 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
 namespace ClientService.Core.Interfaces.Events.Publishers
 {
     public interface IEventPublisher<T> 
     where T : class
     {
-         void PublishEvent(string topicName, string key,  T data);
+         Task PublishEvent(string topicName, List<T> data);
     }
 }
