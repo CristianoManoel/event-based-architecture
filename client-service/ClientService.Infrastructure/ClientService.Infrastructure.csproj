@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\servicebus\ServiceBus.csproj" />
     <ProjectReference Include="..\ClientService.Core\ClientService.Core.csproj" />
   </ItemGroup>
 

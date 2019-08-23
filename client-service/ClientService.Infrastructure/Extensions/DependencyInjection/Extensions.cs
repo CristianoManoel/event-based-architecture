@@ -10,6 +10,7 @@ using @Kafka = ClientService.Infrastructure.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using ServiceBus.Kafka;
 
 namespace ClientService.Infrastructure.Extensions.DependencyInjection
 {
@@ -24,6 +25,9 @@ namespace ClientService.Infrastructure.Extensions.DependencyInjection
         {
             serviceCollection.AddTransient<IRegisterCustomer, RegisterCustomer>();
             serviceCollection.AddTransient<IEventPublisher<Customer>, @Kafka.EventPublisher<Customer>>();
+
+            // Test
+            serviceCollection.AddTransient<KafkaProducer>();
 
             serviceCollection.AddTransient<IEventHandler<Customer>, @Kafka.EventHandler<Customer>>();
             serviceCollection.AddTransient<ICustomerRegistryValidatedEventProcessor, CustomerRegistryValidatedEventProcessor>();

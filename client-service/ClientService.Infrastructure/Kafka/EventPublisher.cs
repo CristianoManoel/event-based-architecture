@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using ClientService.Core.Entities;
 using ClientService.Core.Interfaces.Events.Publishers;
 using ClientService.Infrastructure.Configurations;
 using Confluent.Kafka;
