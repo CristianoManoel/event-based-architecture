@@ -1,41 +1,49 @@
-﻿using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ValidationService.Core.Entities;
-using ValidationService.Core.Interfaces.Events.Handlers;
-using ValidationService.Core.Interfaces.Events.Processors;
-using ValidationService.Infrastructure.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System.IO;
 
 namespace ValidationService.ConsoleApp
 {
     public class Program
     {
+        private const string _prefix = "VALIDATION_SERVICE_";
+        private const string _appsettings = "appsettings.json";
+        private const string _hostsettings = "hostsettings.json";
+
         public static void Main(string[] args)
         {
-            Console.WriteLine($"Start consumidor");
-
-            var configuration = BuildConfiguration();
-            var serviceProvider = BuilderServiceProvider(configuration);
-            var newCustomerRegistryEvenHandler = serviceProvider.GetService<IEventHandler<Customer>>();
-            var newCustomerRegistryEvenProcessor = serviceProvider.GetService<INewCustomerRegistryEventProcessor<Customer>>();
-            newCustomerRegistryEvenHandler.ConsumeEvents(nameof(Customer), newCustomerRegistryEvenProcessor);
-        }
-
-        private static IConfigurationRoot BuildConfiguration()
-        {
-            return new ConfigurationBuilder()
-                .AddJsonFile($"appsettings.json", false, true)
+            var host = new HostBuilder()
+                .ConfigureHostConfiguration(configHost =>
+                {
+                    configHost.SetBasePath(Directory.GetCurrentDirectory());
+                    configHost.AddJsonFile(_hostsettings, optional: true);
+                    configHost.AddEnvironmentVariables(prefix: _prefix);
+                    configHost.AddCommandLine(args);
+                })
+                .ConfigureAppConfiguration((hostContext, configApp) =>
+                {
+                    configApp.SetBasePath(Directory.GetCurrentDirectory());
+                    configApp.AddJsonFile(_appsettings, optional: true);
+                    configApp.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true);
+                    configApp.AddEnvironmentVariables(prefix: _prefix);
+                    configApp.AddCommandLine(args);
+                })
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddLogging();
+                    services.AddTransient<Program>();
+                    new Startup(hostContext.Configuration).ConfigureServices(services);
+                })
+                .ConfigureLogging((hostContext, configLogging) =>
+                {
+                    configLogging.AddConsole();
+                })
+                .UseConsoleLifetime()
                 .Build();
-        }
 
-        private static ServiceProvider BuilderServiceProvider(IConfigurationRoot configuration)
-        {
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.Register();
-            serviceCollection.RegisterConfigurationOptions(configuration);
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            return serviceProvider;
+            host.Run();
         }
     }
 }

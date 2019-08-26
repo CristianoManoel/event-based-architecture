@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Notification.Infrastructure.Configurations;
 
 namespace Notification.Infrastructure.Configuration
@@ -9,7 +8,7 @@ namespace Notification.Infrastructure.Configuration
     {
         public static IServiceCollection AddAppConfiguration(this IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            serviceCollection.Configure<ConfigurationOptions>(configuration);
+            serviceCollection.Configure<AppConfigurationOptions>(configuration);
             return serviceCollection;
         }
 

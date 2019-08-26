@@ -1,7 +1,4 @@
 ﻿using ServiceBus.Configurations;
-using Notification.Infrastructure.Helpers;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Notification.Infrastructure.Configuration
 {
@@ -10,15 +7,14 @@ namespace Notification.Infrastructure.Configuration
         public ProducersOptions Producers { get; set; }
         public ConsumersOptions Consumers { get; set; }
 
-        public class ProducersOptions : PropertyCollection<ProducerSettings>
+        public class ProducersOptions
         {
-            public ProducerSettings Notification { get; set; }
             public ProducerSettings Quotes { get; set; }
         }
 
-        public class ConsumersOptions : PropertyCollection<ConsumerSettings>
+        public class ConsumersOptions
         {
-            public ConsumerSettings Notification { get; set; }
+            public ConsumerSettings CustomerNotification { get; set; }
             public ConsumerSettings Quotes { get; set; }
         }
     }

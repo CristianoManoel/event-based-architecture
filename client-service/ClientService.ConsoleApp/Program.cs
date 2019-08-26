@@ -1,169 +1,104 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using ClientService.Core.Entities;
 using ClientService.Core.Enums;
-using ClientService.Core.Interfaces;
-using ClientService.Core.Interfaces.Events.Handlers;
-using ClientService.Core.Interfaces.Events.Processors;
-using ClientService.Core.Interfaces.UseCases;
-using ClientService.Infrastructure.Configurations;
-using ClientService.Infrastructure.Extensions.DependencyInjection;
-using ClientService.Infrastructure.Kafka;
-using Confluent.Kafka;
+using ClientService.Core.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
 
 namespace ClientService.ConsoleApp
 {
     public class Program
     {
+        private const string _prefix = "CLIENT_SERVICE_";
+        private const string _appsettings = "appsettings.json";
+        private const string _hostsettings = "hostsettings.json";
+
+        #region Start application without hosted services
+
+        //public static void Main(string[] args)
+        //{
+        //    var configuration = new ConfigurationBuilder()
+        //        .AddJsonFile($"appsettings.json", false, true)
+        //        .Build();
+
+        //    var serviceCollection = new ServiceCollection();
+
+        //    serviceCollection.AddTransient<Program>();
+        //    serviceCollection.AddTransient<IConfiguration>(c => configuration);
+
+        //    new Startup(configuration).ConfigureServices(serviceCollection);
+
+        //    serviceCollection.BuildServiceProvider().GetService<Program>().Run(args);
+        //}
+
+        #endregion
+
+        #region Start application with hosted services
 
         public static void Main(string[] args)
         {
-            var configuration = BuildConfiguration();
-            var serviceProvider = BuilderServiceProvider(configuration);
-            //CustomerConsumer(serviceProvider);
-            CustomerProducer2(serviceProvider);
-            Console.Read();
-        }
-
-        private static void CustomerConsumer(ServiceProvider serviceProvider)
-        {
-            var customerRegistryValidationEventHandler = serviceProvider.GetService<Core.Interfaces.Events.Handlers.IEventHandler<Customer>>();
-            var customerRegistryValidatedEventProcessor = serviceProvider.GetService<ICustomerRegistryValidatedEventProcessor>();
-            customerRegistryValidationEventHandler.ConsumeEvents("Customer-Validation", customerRegistryValidatedEventProcessor);
-        }
-
-        private static void CustomerProducer2(ServiceProvider serviceProvider)
-        {
-            List<Customer> list;
-
-            //registerCustomer = serviceProvider.GetService<IRegisterCustomer>();
-
-            //while (true)
-            {
-                //Console.WriteLine("Entre com a quantidade de mensagens:");
-                //var repeat = Convert.ToInt32(Console.ReadLine());
-                var repeat = 1;
-                list = new List<Customer>();
-
-                for (var i = 1; i <= repeat; i++)
+            var host = new HostBuilder()
+                .ConfigureHostConfiguration(configHost =>
                 {
-                    var customerName = "customerName-" + i;
-                    var customerCPF = "customerCPF-" + i;
-                    var id = Guid.NewGuid();
-                    list.Add(new Customer { Id = i, Cpf = customerCPF, Name = $"{customerName} - {id.ToString()}", RegisterStatus = RegisterStatus.Received });
+                    configHost.SetBasePath(Directory.GetCurrentDirectory());
+                    configHost.AddJsonFile(_hostsettings, optional: true);
+                    configHost.AddEnvironmentVariables(prefix: _prefix);
+                    configHost.AddCommandLine(args);
+                })
+                .ConfigureAppConfiguration((hostContext, configApp) =>
+                {
+                    configApp.SetBasePath(Directory.GetCurrentDirectory());
+                    configApp.AddJsonFile(_appsettings, optional: true);
+                    configApp.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true);
+                    configApp.AddEnvironmentVariables(prefix: _prefix);
+                    configApp.AddCommandLine(args);
+                })
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddLogging();
+                    services.AddTransient<Program>();
+                    new Startup(hostContext.Configuration).ConfigureServices(services);
+                })
+                .ConfigureLogging((hostContext, configLogging) =>
+                {
+                    configLogging.AddConsole();
+                })
+                .UseConsoleLifetime()
+                .Build();
 
-                    var kafkaOptions = serviceProvider.GetService<KafkaOptions>();
-
-                    var key = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString();
-                    var topic = "B";
-
-                    //var kafkaProducer = new KafkaProducer();
-                    //kafkaProducer
-                    //    .AddBroker(kafkaOptions.Producer.BootstrapServers)
-                    //    .Success(dr =>
-                    //    {
-                    //        //Console.WriteLine($"Result Key: {dr.Key}|Offset: {dr.Offset}|Partition: {dr.Partition}|Status:{dr.Status}|TopicPartition: {dr.TopicPartition}|{dr.TopicPartitionOffset}");
-                    //    })
-                    //    .Error(e =>
-                    //    {
-                    //        Console.WriteLine(e.ToString());
-                    //    })
-                    //    .Produce(topic, key, list.Last());
-
-                    //var kafkaConsumer = new KafkaConsumer<Customer>();
-                    //kafkaConsumer
-                    //    .AddBroker(kafkaOptions.Consumer.BootstrapServers)
-                    //    .WithGroupId(topic)
-                    //    //.EnableAutoCommit(kafkaOptions.Consumer.EnableAutoCommit)
-                    //    .EnableAutoCommit(false)
-                    //    //.EnablePartionEof(kafkaOptions.Consumer.EnablePartionEof)
-                    //    .AutoOffSetReset(AutoOffsetReset.Earliest)
-                    //    .Success((entity, cr) =>
-                    //    {
-                    //        Console.WriteLine(cr.Key);
-                    //    })
-                    //    .Error(e =>
-                    //    {
-                    //        if (e is ConsumeException ce)
-                    //            Console.WriteLine($"Error occured: {ce.Error.Reason}");
-                    //    })
-                    //    .Subscribe(topic);
-
-                    //var kafkaConsumer2 = new KafkaConsumer<Customer>();
-                    //kafkaConsumer2
-                    //    .AddBroker(kafkaOptions.Consumer.BootstrapServers)
-                    //    .WithGroupId(topic)
-                    //    //.EnableAutoCommit(kafkaOptions.Consumer.EnableAutoCommit)
-                    //    .EnableAutoCommit(false)
-                    //    //.EnablePartionEof(kafkaOptions.Consumer.EnablePartionEof)
-                    //    .AutoOffSetReset(AutoOffsetReset.Earliest)
-                    //    .Success((entity, cr) =>
-                    //    {
-                    //        Console.WriteLine(cr.Key);
-                    //    })
-                    //    .Error(e =>
-                    //    {
-                    //        if (e is ConsumeException ce)
-                    //            Console.WriteLine($"Error occured: {ce.Error.Reason}");
-                    //    })
-                    //    .Subscribe(topic);
-
-                    //key = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString();
-                    //kafkaProducer.Publish("A", i.ToString(), list.Last());
-                    //Console.ReadKey();
-                }
-
-                //registerCustomer.Register(list).Wait();
-
-
-            }
+            host.RunAsync();
+            host.Services.GetService<Program>().Run();
         }
 
+        #endregion
 
-        private static void CustomerProducer(ServiceProvider serviceProvider)
+        private readonly ICustomerRegistrationUseCase _registerCustomer;
+
+        public Program(ICustomerRegistrationUseCase registerCustomer)
         {
-            IRegisterCustomer registerCustomer;
-            List<Customer> list;
+            _registerCustomer = registerCustomer;
+        }
 
-            registerCustomer = serviceProvider.GetService<IRegisterCustomer>();
-
+        public void Run(params string[] args)
+        {
             while (true)
             {
-                Console.WriteLine("Entre com a quantidade de mensagens:");
-                var repeat = Convert.ToInt32(Console.ReadLine());
-                list = new List<Customer>();
+                Console.WriteLine("Type the customer name and press enter");
+                var customerName = Console.ReadLine();
 
-                for (var i = 1; i <= repeat; i++)
-                {
-                    var customerName = "customerName-" + i;
-                    var customerCPF = "customerCPF-" + i;
-                    var id = Guid.NewGuid();
-                    list.Add(new Customer { Id = i, Cpf = customerCPF, Name = $"{customerName} - {id.ToString()}", RegisterStatus = RegisterStatus.Received });
-                }
+                Console.WriteLine("Type the customer CPF and press enter");
+                var customerCPF = Console.ReadLine();
 
-                registerCustomer.Register(list).Wait();
+                var id = Guid.NewGuid();
+                var customer = new Customer { Id = id, Cpf = customerCPF, Name = $"{customerName} - {id.ToString()}", RegisterStatus = RegisterStatus.Received };
+
+                _registerCustomer.Register(customer);
+
+                Console.WriteLine("--------------------------------------------");
             }
-        }
-
-        private static IConfigurationRoot BuildConfiguration()
-        {
-            return new ConfigurationBuilder()
-                .AddJsonFile($"appsettings.json", false, true)
-                .Build();
-        }
-
-        private static ServiceProvider BuilderServiceProvider(IConfigurationRoot configuration)
-        {
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.Register();
-            serviceCollection.RegisterConfigurationOptions(configuration);
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            return serviceProvider;
         }
     }
 }

@@ -9,6 +9,5 @@ namespace ServiceBus.Configurations
         public int AutoOffSetReset { get; set; }
         public bool EnablePartionEof { get; set; }
         public int MaxPollIntervalMs { get; set; }
-        public bool AutoConsume { get; set; } = true;
     }
 }

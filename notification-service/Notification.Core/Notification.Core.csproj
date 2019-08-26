@@ -10,4 +10,8 @@
     <None Remove="ServiceBus\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\servicebus\ServiceBus.csproj" />
+  </ItemGroup>
+
 </Project>

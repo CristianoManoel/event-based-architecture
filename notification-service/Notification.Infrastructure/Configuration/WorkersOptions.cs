@@ -10,5 +10,4 @@
             public int Time { get; set; }
         }
     }
-
 }

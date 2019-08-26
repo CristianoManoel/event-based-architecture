@@ -7,8 +7,9 @@ namespace Notification.Infrastructure.Configuration
     {
         public static IServiceCollection AddWorkers(this IServiceCollection serviceCollection)
         {
-            serviceCollection.AddHostedService<ConsumersWorker>();
-            serviceCollection.AddHostedService<QuotesWorker>();
+            serviceCollection.AddHostedService<CostomerNotificationSubscriberWorker>();
+            //serviceCollection.AddHostedService<QuotesPublisherWorker>();
+            //serviceCollection.AddHostedService<QuotesSubscriberWorker>();
             return serviceCollection;
         }
     }
