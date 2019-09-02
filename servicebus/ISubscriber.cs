@@ -7,6 +7,6 @@ namespace ServiceBus.Kafka
 {
     public interface ISubscriber
     {
-        void SubscribeAsync<T>(ConsumerSettings settings, IEnumerable<IEventSubscriber<T>> eventConsumers, Action<Exception> errorHandler = null);
+        void SubscribeAsync<T>(ConsumerSettings settings, IEventProcessor<T> eventConsumer, Action<Exception> errorHandler = null);
     }
 }

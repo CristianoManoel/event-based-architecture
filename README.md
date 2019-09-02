@@ -6,7 +6,7 @@ Repositório usado como uma prova conceitual do apache kafka na arquitetura orie
 
 **Requisitos:**
 
-* Dotnet Core 2.2+
+* Dotnet Core 2.1+
 * C#
 * Apache Kafka 2.2.0
 * Apache ZooKeeper

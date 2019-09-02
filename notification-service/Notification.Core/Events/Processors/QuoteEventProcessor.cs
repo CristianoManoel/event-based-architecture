@@ -1,24 +1,23 @@
 ﻿using ClientService.Core.UseCases;
 using Notification.Core.Entities;
-using ServiceBus;
 using ServiceBus.Events;
 
-namespace ClientService.Core.Events.Subscribers
+namespace ClientService.Core.Events.Processors
 {
-    public interface IQuoteEventSubscriber : IEventSubscriber<Quote> { }
+    public interface IQuoteEventProcessor : IEventProcessor<Quote> { }
 
-    public class QuoteEventSubscriber : IQuoteEventSubscriber
+    public class QuoteEventProcessor : IQuoteEventProcessor
     {
         private readonly IQuoteReceiveUseCase _quoteReceiveUseCase;
 
-        public QuoteEventSubscriber(
+        public QuoteEventProcessor(
             IQuoteReceiveUseCase quoteReceiveUseCase
         )
         {
             _quoteReceiveUseCase = quoteReceiveUseCase;
         }
 
-        public void Subscribe(Quote data, SubscribeEventArgs args)
+        public void Subscribe(Quote data)
         {
             _quoteReceiveUseCase.Receive(data);
         }

@@ -1,7 +1,7 @@
 namespace ServiceBus.Events
 {
-    public interface IEventSubscriber<T>
+    public interface IEventProcessor<T>
     {
-        void Subscribe(T data, SubscribeEventArgs args);
+        void Subscribe(T data);
     }
 }

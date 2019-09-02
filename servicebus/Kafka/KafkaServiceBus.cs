@@ -13,12 +13,12 @@ namespace ServiceBus.Kafka
             
         }
 
-        public async void SubscribeAsync<T>(ConsumerSettings settings, IEnumerable<IEventSubscriber<T>> eventConsumers, Action<Exception> errorHandler = null)
+        public async void SubscribeAsync<T>(ConsumerSettings settings, IEventProcessor<T> eventConsumer, Action<Exception> errorHandler = null)
         {
             await Task.Run(() =>
             {
                 new KafkaConsumerFluent<T>()
-                    .Success(eventConsumers)
+                    .Success(eventConsumer)
                     .WithConfig(settings)
                     .Error(errorHandler)
                     .Subscribe();

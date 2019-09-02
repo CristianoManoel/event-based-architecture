@@ -1,7 +1,12 @@
-﻿namespace ServiceBus.Events
-{
-    public class SubscribeEventArgs
-    {
-        public bool Commit { get; set; }
-    }
-}
+﻿//namespace ServiceBus.Events
+//{
+//    public class SubscribeEventArgs
+//    {
+//        internal bool CanCommit { get; set; }
+
+//        public void Commit()
+//        {
+//            CanCommit = true;
+//        }
+//    }
+//}

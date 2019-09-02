@@ -7,9 +7,8 @@ using Notification.Infrastructure.Configurations;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using ServiceBus.Kafka;
-using ClientService.Core.Events.Subscribers;
+using ClientService.Core.Events.Processors;
 
 namespace Notification.Infrastructure.Workers
 {
@@ -19,20 +18,20 @@ namespace Notification.Infrastructure.Workers
         private readonly ISubscriber _subscriber;
         private readonly AppConfigurationOptions _configuration;
         private KafkaOptions.ConsumersOptions _subscribersOptions;
-        private readonly IEnumerable<ICustomerNotificationEventSubscriber> _events;
+        private readonly ICustomerNotificationEventProcessor _event;
 
         public CostomerNotificationSubscriberWorker(
             ILogger<CostomerNotificationSubscriberWorker> logger,
             IOptions<AppConfigurationOptions> configuration,
             ISubscriber subscriber,
-            IEnumerable<ICustomerNotificationEventSubscriber> events
+            ICustomerNotificationEventProcessor eventConsumer
         )
         {
             _logger = logger;
             _subscriber = subscriber;
             _configuration = configuration.Value;
             _subscribersOptions = _configuration.Kafka.Consumers;
-            _events = events;
+            _event = eventConsumer;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -47,7 +46,7 @@ namespace Notification.Infrastructure.Workers
                     Console.WriteLine($"Error occured: {e.ToString()}");
             };
 
-            _subscriber.SubscribeAsync(_subscribersOptions.CustomerNotification, _events, errorHandler);
+            _subscriber.SubscribeAsync(_subscribersOptions.CustomerNotification, _event, errorHandler);
 
             return Task.CompletedTask;
         }

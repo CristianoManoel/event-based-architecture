@@ -4,7 +4,7 @@ using ServiceBus.Kafka;
 using ClientService.Core.UseCases;
 using ClientService.Core.Events.Publishers;
 using ClientService.Infrastructure.ServiceBus.Publishers;
-using ClientService.Core.Events.Subscribers;
+using ClientService.Core.Events.Processors;
 
 namespace ClientService.Infrastructure.Configuration
 {
@@ -19,7 +19,7 @@ namespace ClientService.Infrastructure.Configuration
         {
             // Subscribers
             serviceCollection.AddTransient<ISubscriber, KafkaServiceBus>();
-            serviceCollection.AddTransient<ICustomerValidationEventSubscriber, CustomerValidationEventSubscriber>();
+            serviceCollection.AddTransient<ICustomerValidationEventProcessor, CustomerValidationEventProcessor>();
 
             // Publishers
             serviceCollection.AddTransient<IPublisher, KafkaServiceBus>();

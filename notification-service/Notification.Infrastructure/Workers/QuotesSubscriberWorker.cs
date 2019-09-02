@@ -2,15 +2,13 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Notification.Core.Entities;
 using Notification.Infrastructure.Configuration;
 using Notification.Infrastructure.Configurations;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using ServiceBus.Kafka;
-using ClientService.Core.Events.Subscribers;
+using ClientService.Core.Events.Processors;
 
 namespace Notification.Infrastructure.Workers
 {
@@ -20,20 +18,20 @@ namespace Notification.Infrastructure.Workers
         private readonly ISubscriber _subscriber;
         private readonly AppConfigurationOptions _configuration;
         private KafkaOptions.ConsumersOptions _subscribersOptions;
-        private readonly IEnumerable<IQuoteEventSubscriber> _events;
+        private readonly IQuoteEventProcessor _event;
 
         public QuotesSubscriberWorker(
             ILogger<CostomerNotificationSubscriberWorker> logger,
             IOptions<AppConfigurationOptions> configuration,
             ISubscriber subscriber,
-            IEnumerable<IQuoteEventSubscriber> events
+            IQuoteEventProcessor eventConsumer
         )
         {
             _logger = logger;
             _subscriber = subscriber;
             _configuration = configuration.Value;
             _subscribersOptions = _configuration.Kafka.Consumers;
-            _events = events;
+            _event = eventConsumer;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -48,7 +46,7 @@ namespace Notification.Infrastructure.Workers
                     Console.WriteLine($"Error occured: {e.ToString()}");
             };
 
-            _subscriber.SubscribeAsync(_subscribersOptions.Quotes, _events, errorHandler);
+            _subscriber.SubscribeAsync(_subscribersOptions.Quotes, _event, errorHandler);
 
             return Task.CompletedTask;
         }

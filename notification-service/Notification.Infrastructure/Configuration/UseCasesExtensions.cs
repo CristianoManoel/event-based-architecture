@@ -1,7 +1,7 @@
 using ServiceBus.Kafka;
 using Microsoft.Extensions.DependencyInjection;
 using Notification.Core.Entities;
-using ClientService.Core.Events.Subscribers;
+using ClientService.Core.Events.Processors;
 using ClientService.Core.UseCases;
 using ClientService.Core.Events.Publishers;
 using Notification.Infrastructure.ServiceBus.Publishers;

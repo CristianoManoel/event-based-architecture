@@ -1,23 +1,20 @@
 ﻿using ValidationService.Core.Entities;
-using ValidationService.Core.Events.Publishers;
-using System;
 using ValidationService.Core.UseCases;
-using ServiceBus.Events;
 
-namespace ValidationService.Core.Events.Subscribers
+namespace ValidationService.Core.Events.Processors
 {
-    public class CustomerRegistrationEventSubscriber : ICustomerRegistrationEventSubscriber
+    public class CustomerRegistrationEventProcessor : ICustomerRegistrationEventProcessor
     {
         private readonly ICustomerValidationUseCase _customerValidationUseCase;
 
-        public CustomerRegistrationEventSubscriber(
+        public CustomerRegistrationEventProcessor(
             ICustomerValidationUseCase customerValidationUseCase
         )
         {
             _customerValidationUseCase = customerValidationUseCase;
         }
 
-        public void Subscribe(Customer data, SubscribeEventArgs args)
+        public void Subscribe(Customer data)
         {
             _customerValidationUseCase.Validate(data);
         }

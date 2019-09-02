@@ -1,7 +1,7 @@
 using ServiceBus.Kafka;
 using Microsoft.Extensions.DependencyInjection;
 using Notification.Core.Entities;
-using ClientService.Core.Events.Subscribers;
+using ClientService.Core.Events.Processors;
 using ClientService.Core.UseCases;
 using ClientService.Core.Events.Publishers;
 using Notification.Infrastructure.ServiceBus.Publishers;
@@ -19,8 +19,8 @@ namespace Notification.Infrastructure.Configuration
         {
             // Subscribers
             serviceCollection.AddTransient<ISubscriber, KafkaServiceBus>();
-            serviceCollection.AddTransient<ICustomerNotificationEventSubscriber, CustomerNotificationEventSubscriber>();
-            serviceCollection.AddTransient<IQuoteEventSubscriber, QuoteEventSubscriber>();
+            serviceCollection.AddTransient<ICustomerNotificationEventProcessor, CustomerNotificationEventProcessor>();
+            serviceCollection.AddTransient<IQuoteEventProcessor, QuoteEventProcessor>();
 
             // Publishers
             serviceCollection.AddTransient<IPublisher, KafkaServiceBus>();

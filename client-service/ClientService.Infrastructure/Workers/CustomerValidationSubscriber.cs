@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using ServiceBus.Kafka;
-using ClientService.Core.Events.Subscribers;
+using ClientService.Core.Events.Processors;
 
 namespace ClientService.Infrastructure.Workers
 {
@@ -20,7 +20,7 @@ namespace ClientService.Infrastructure.Workers
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
         private readonly ISubscriber _subscriber;
-        private readonly IEnumerable<ICustomerValidationEventSubscriber> _events;
+        private readonly ICustomerValidationEventProcessor _event;
         private KafkaOptions.ConsumersOptions _subscribersOptions;
 
         public CustomerValidationSubscriber(
@@ -28,14 +28,14 @@ namespace ClientService.Infrastructure.Workers
             ILogger<CustomerValidationSubscriber> logger,
             IOptions<AppConfigurationOptions> appConfiguration,
             ISubscriber subscriber,
-            IEnumerable<ICustomerValidationEventSubscriber> events
+            ICustomerValidationEventProcessor eventConsumer
         )
         {
             _logger = logger;
             _configuration = configuration;
             _subscriber = subscriber;
             _subscribersOptions = appConfiguration.Value.Kafka.Consumers;
-            _events = events;
+            _event = eventConsumer;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -43,7 +43,7 @@ namespace ClientService.Infrastructure.Workers
             if (CanSubscribe())
             {
                 _logger.LogInformation("Start customer consumer");
-
+                
                 Action<Exception> errorHandler = e =>
                 {
                     if (e is ConsumeException ce)
@@ -52,7 +52,7 @@ namespace ClientService.Infrastructure.Workers
                         Console.WriteLine($"Error occured: {e.ToString()}");
                 };
 
-                _subscriber.SubscribeAsync(_subscribersOptions.CustomerValidation, _events, errorHandler);
+                _subscriber.SubscribeAsync(_subscribersOptions.CustomerValidation, _event, errorHandler);
             }
 
             return Task.CompletedTask;

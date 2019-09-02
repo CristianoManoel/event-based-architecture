@@ -4,7 +4,7 @@ using ServiceBus.Kafka;
 using ValidationService.Core.UseCases;
 using ValidationService.Core.Events.Publishers;
 using ValidationService.Infrastructure.ServiceBus.Publishers;
-using ValidationService.Core.Events.Subscribers;
+using ValidationService.Core.Events.Processors;
 
 namespace ValidationService.Infrastructure.Configuration
 {
@@ -19,7 +19,7 @@ namespace ValidationService.Infrastructure.Configuration
         {
             // Subscribers
             serviceCollection.AddTransient<ISubscriber, KafkaServiceBus>();
-            serviceCollection.AddTransient<ICustomerRegistrationEventSubscriber, CustomerRegistrationEventSubscriber>();
+            serviceCollection.AddTransient<ICustomerRegistrationEventProcessor, CustomerRegistrationEventProcessor>();
 
             // Publishers
             serviceCollection.AddTransient<IPublisher, KafkaServiceBus>();

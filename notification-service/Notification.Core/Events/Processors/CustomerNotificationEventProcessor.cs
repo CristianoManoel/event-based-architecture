@@ -3,22 +3,22 @@ using Notification.Core.Entities;
 using ServiceBus;
 using ServiceBus.Events;
 
-namespace ClientService.Core.Events.Subscribers
+namespace ClientService.Core.Events.Processors
 {
-    public interface ICustomerNotificationEventSubscriber : IEventSubscriber<Customer> { }
+    public interface ICustomerNotificationEventProcessor : IEventProcessor<Customer> { }
 
-    public class CustomerNotificationEventSubscriber : ICustomerNotificationEventSubscriber
+    public class CustomerNotificationEventProcessor : ICustomerNotificationEventProcessor
     {
         private readonly ICustomerNotificationUseCase _customerNotificationUseCase;
 
-        public CustomerNotificationEventSubscriber(
+        public CustomerNotificationEventProcessor(
             ICustomerNotificationUseCase customerNotificationUseCase
         )
         {
             _customerNotificationUseCase = customerNotificationUseCase;
         }
 
-        public void Subscribe(Customer data, SubscribeEventArgs args)
+        public void Subscribe(Customer data)
         {
             _customerNotificationUseCase.Receive(data);
         }

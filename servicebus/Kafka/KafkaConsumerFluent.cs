@@ -10,7 +10,6 @@ namespace ServiceBus.Kafka
 {
     public class KafkaConsumerFluent<T>
     {
-        private readonly List<IEventSubscriber<T>> _eventConsumers = new List<IEventSubscriber<T>>();
         private readonly List<string> _brokerList = new List<string>();
 
         private Action<Exception> _error;
@@ -20,6 +19,7 @@ namespace ServiceBus.Kafka
         private AutoOffsetReset _autoOffSetReset;
         private bool? _enablePartionEof;
         private int _maxPollIntervalMs;
+        private IEventProcessor<T> _eventConsumer;
 
         public KafkaConsumerFluent()
         {
@@ -85,23 +85,17 @@ namespace ServiceBus.Kafka
             return this;
         }
 
-        public KafkaConsumerFluent<T> Success(IEventSubscriber<T> eventConsumer)
+        public KafkaConsumerFluent<T> Success(IEventProcessor<T> eventConsumer)
         {
-            this._eventConsumers.Add(eventConsumer);
+            this._eventConsumer = eventConsumer;
             return this;
         }
 
-        public KafkaConsumerFluent<T> Success(IEnumerable<IEventSubscriber<T>> eventConsumers)
-        {
-            this._eventConsumers.AddRange(eventConsumers);
-            return this;
-        }
-
-        public KafkaConsumerFluent<T> Success(Action<T> success)
-        {
-            this._eventConsumers.Add(new InternalEvent(success));
-            return this;
-        }
+        //public KafkaConsumerFluent<T> Success(Action<T> success)
+        //{
+        //    this._eventConsumers.Add(new InternalEvent(success));
+        //    return this;
+        //}
 
         public KafkaConsumerFluent<T> Error(Action<Exception> error)
         {
@@ -129,7 +123,7 @@ namespace ServiceBus.Kafka
             using (var c = new ConsumerBuilder<string, string>(config).Build())
             {
                 c.Subscribe(topicName ?? _topicName);
-
+                
                 //if (partition >= 0 && offset >= 0)
                 //{
                 //    var topicPartitionOffset = new TopicPartitionOffset(topicName, partition, offset);
@@ -155,20 +149,14 @@ namespace ServiceBus.Kafka
                         try
                         {
                             var cr = c.Consume();
-                            
+
                             if (!cr.IsPartitionEOF)
                             {
-                                var args = new SubscribeEventArgs();
-                                foreach (var ec in _eventConsumers)
-                                {
-                                    //var eventGenericType = GetEventGenericType(ec);
-                                    //var data = JsonConvert.DeserializeObject(cr.Value, eventGenericType);
-                                    //InvokeEvent(cr, ec, data);
-                                    var data = JsonConvert.DeserializeObject<T>(cr.Value);
-                                    ec.Subscribe(data, args);
-                                }
+                                //var args = new SubscribeEventArgs();                                
+                                var data = JsonConvert.DeserializeObject<T>(cr.Value);
+                                _eventConsumer.Subscribe(data);
 
-                                if (args.Commit)
+                                if (!config.EnableAutoCommit.Value)
                                     c.Commit();
                             }
 
@@ -192,19 +180,19 @@ namespace ServiceBus.Kafka
             }
         }
 
-        //private void InvokeEvent(ConsumeResult<string, string> cr, IEventSubscriber instance, object data)
+        //private void InvokeEvent(ConsumeResult<string, string> cr, IEventProcessor instance, object data)
         //{
-        //    var methodName = nameof(IEventSubscriber<object>.Subscribe);
+        //    var methodName = nameof(IEventProcessor<object>.Subscribe);
         //    var args = new object[] { data };
         //    instance.GetType().GetMethod(methodName).Invoke(instance, args);
         //}
 
-        //private Type GetEventGenericType(IEventSubscriber ec)
+        //private Type GetEventGenericType(IEventProcessor ec)
         //{
         //    return ((Type[])((TypeInfo)ec.GetType()).ImplementedInterfaces)[0].GenericTypeArguments[0];
         //}
 
-        private class InternalEvent : IEventSubscriber<T>
+        private class InternalEvent : IEventProcessor<T>
         {
             private Action<T> _success;
 
@@ -213,7 +201,7 @@ namespace ServiceBus.Kafka
                 _success = success;
             }
 
-            public void Subscribe(T data, SubscribeEventArgs args)
+            public void Subscribe(T data)
             {
                 _success(data);
             }

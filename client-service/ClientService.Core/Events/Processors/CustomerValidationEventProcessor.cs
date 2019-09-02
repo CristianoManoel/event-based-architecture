@@ -1,23 +1,20 @@
 ﻿using ClientService.Core.Entities;
-using ClientService.Core.Events.Publishers;
 using ClientService.Core.UseCases;
-using ServiceBus.Events;
-using System;
 
-namespace ClientService.Core.Events.Subscribers
+namespace ClientService.Core.Events.Processors
 {
-    public class CustomerValidationEventSubscriber : ICustomerValidationEventSubscriber
+    public class CustomerValidationEventProcessor : ICustomerValidationEventProcessor
     {
         private readonly ICustomerSendNotificationUseCase _notificationCustomerUseCase;
 
-        public CustomerValidationEventSubscriber(
+        public CustomerValidationEventProcessor(
             ICustomerSendNotificationUseCase notificationCustomerUseCase
         )
         {
             _notificationCustomerUseCase = notificationCustomerUseCase;
         }
 
-        public void Subscribe(Customer data, SubscribeEventArgs args)
+        public void Subscribe(Customer data)
         {
             _notificationCustomerUseCase.Send(data);
         }
