@@ -8,8 +8,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using ServiceBus.Kafka;
 using ValidationService.Core.Events.Processors;
+using ServiceBus;
 
 namespace ValidationService.Infrastructure.Workers
 {

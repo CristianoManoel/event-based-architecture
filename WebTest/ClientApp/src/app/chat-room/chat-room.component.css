@@ -1,0 +1,44 @@
+:host {
+    margin-bottom: 5px;
+    float: left;
+    width: 50%;
+}
+
+.clear {
+    clear: both;
+}
+
+.room {
+    padding: 5px;
+    border: solid 1px white;
+    background-color: #00162b;
+    height: 229px;
+}
+
+div.infos {
+    float: left;
+}
+    div.infos .actions {
+        padding-bottom: 12px;
+    }
+
+    div.infos .settings {
+        width: 340px;
+        height: 177px;
+    }
+
+        div.infos .settings textarea {
+            width: 100%;
+            height: 100%;
+        }
+
+div.messages {
+    overflow-y: scroll;
+    height: 100%;
+    color: white;
+}
+
+    div.messages span.error {
+        background-color: red;
+        font-weight: bold;
+    }

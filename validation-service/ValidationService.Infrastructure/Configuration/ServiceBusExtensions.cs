@@ -5,6 +5,7 @@ using ValidationService.Core.UseCases;
 using ValidationService.Core.Events.Publishers;
 using ValidationService.Infrastructure.ServiceBus.Publishers;
 using ValidationService.Core.Events.Processors;
+using ServiceBus;
 
 namespace ValidationService.Infrastructure.Configuration
 {

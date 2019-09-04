@@ -1,0 +1,20 @@
+<div class="sender">
+    <div class="config">
+        <textarea [(ngModel)]="publisherSettigns" rows="10" cols="50"></textarea>
+    </div>
+
+    <div class="data">
+        <textarea [(ngModel)]="message"></textarea>
+        
+    </div>
+
+    <div class="actions">
+        <button (click)="send()">Enviar</button>
+    </div>
+</div>
+
+<app-chat-room roomId="room1" topic="Chat"></app-chat-room>
+<app-chat-room roomId="room2" topic="Chat.retry.1"></app-chat-room>
+<app-chat-room roomId="room3" topic="Chat.retry.2"></app-chat-room>
+<app-chat-room roomId="room4" topic="Chat.retry.3"></app-chat-room>
+<app-chat-room roomId="room4" topic="Chat.dlq"></app-chat-room>

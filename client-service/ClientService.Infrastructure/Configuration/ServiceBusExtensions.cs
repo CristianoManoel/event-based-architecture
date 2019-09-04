@@ -1,10 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
-using ClientService.Core.Entities;
 using ServiceBus.Kafka;
 using ClientService.Core.UseCases;
 using ClientService.Core.Events.Publishers;
 using ClientService.Infrastructure.ServiceBus.Publishers;
 using ClientService.Core.Events.Processors;
+using ServiceBus;
 
 namespace ClientService.Infrastructure.Configuration
 {

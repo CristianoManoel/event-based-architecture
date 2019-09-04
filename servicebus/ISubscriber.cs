@@ -1,12 +1,12 @@
 ﻿using ServiceBus.Configurations;
 using ServiceBus.Events;
 using System;
-using System.Collections.Generic;
+using System.Threading;
 
-namespace ServiceBus.Kafka
+namespace ServiceBus
 {
     public interface ISubscriber
     {
-        void SubscribeAsync<T>(ConsumerSettings settings, IEventProcessor<T> eventConsumer, Action<Exception> errorHandler = null);
+        void SubscribeAsync<T>(ConsumerSettings settings, IEventProcessor<T> eventConsumer, Action<Exception> errorHandler = null, CancellationToken cancellationToken = default);
     }
 }

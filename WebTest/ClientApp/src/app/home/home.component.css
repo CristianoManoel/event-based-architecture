@@ -1,0 +1,39 @@
+div.sender {
+    width: 100%;
+    height: 100px;
+    background-color: #00162b;
+    padding: 5px;
+    border-bottom: 2px;
+}
+
+    div.sender .config {
+        height: 100%;
+        float: left;
+        margin-right: 5px;
+    }
+
+        div.sender .config textarea {
+            height: 100%;
+        }
+
+    div.sender .data {
+        height: 100%;
+        float: left;
+        margin-right: 5px;
+    }
+
+        div.sender .data textarea {
+            height: 100%;
+            width: 800px;
+        }
+
+    div.sender .actions {
+        height: 100%;
+        float: left;
+        margin-right: 5px;
+    }
+
+        div.sender .actions button {
+            height: 100%;
+            width: 140px;
+        }

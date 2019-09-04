@@ -4,6 +4,7 @@ using ValidationService.Infrastructure.Configuration;
 using ValidationService.Infrastructure.Configurations;
 using ServiceBus.Kafka;
 using ValidationService.Core.Events.Publishers;
+using ServiceBus;
 
 namespace ValidationService.Infrastructure.ServiceBus.Publishers
 {

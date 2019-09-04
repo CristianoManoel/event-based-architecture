@@ -105,7 +105,7 @@ namespace ServiceBus.Kafka
 
         #endregion
 
-        public void Subscribe(string topicName = null)
+        public void Subscribe(string topicName = null, CancellationToken cancellationToken = default)
         {
             if (_brokerList.Count == 0)
                 throw new InvalidOperationException($"One broker must be added to build a consumer. Use the {nameof(AddBroker)} method to add a broker!");
@@ -122,8 +122,16 @@ namespace ServiceBus.Kafka
 
             using (var c = new ConsumerBuilder<string, string>(config).Build())
             {
+                if (cancellationToken != default)
+                {
+                    cancellationToken.Register(() =>
+                    {
+                        c.Unsubscribe();
+                    });
+                }
+
                 c.Subscribe(topicName ?? _topicName);
-                
+
                 //if (partition >= 0 && offset >= 0)
                 //{
                 //    var topicPartitionOffset = new TopicPartitionOffset(topicName, partition, offset);
@@ -144,11 +152,13 @@ namespace ServiceBus.Kafka
 
                 try
                 {
-                    while (true)
+                    while (!cancellationToken.IsCancellationRequested)
                     {
+                        ConsumeResult<string, string> cr = null;
+
                         try
                         {
-                            var cr = c.Consume();
+                            cr = c.Consume();
 
                             if (!cr.IsPartitionEOF)
                             {
@@ -165,12 +175,26 @@ namespace ServiceBus.Kafka
                             //Console.WriteLine($"End of Partion Reached.");
                             //}
                         }
-                        catch (ConsumeException e)
+                        catch (Exception e)
                         {
-                            //Console.WriteLine($"Error occured: {e.Error.Reason}");
-                            _error?.Invoke(e);
+                            if (_error == null)
+                            {
+                                if (e is ConsumeException ce)
+                                    Console.WriteLine($"Error occured: {ce.Error.Reason}");
+                                else
+                                    Console.WriteLine($"Error occured: {e.Message}");
+                            }
+                            else
+                            {
+                                _error.Invoke(e);
+                            }
+
+                            if (cr != null)
+                                this.AddRetry(cr);
                         }
                     }
+
+                    // c.Unsubscribe();
                 }
                 catch (OperationCanceledException)
                 {
@@ -180,17 +204,40 @@ namespace ServiceBus.Kafka
             }
         }
 
-        //private void InvokeEvent(ConsumeResult<string, string> cr, IEventProcessor instance, object data)
-        //{
-        //    var methodName = nameof(IEventProcessor<object>.Subscribe);
-        //    var args = new object[] { data };
-        //    instance.GetType().GetMethod(methodName).Invoke(instance, args);
-        //}
+        private async void AddRetry(ConsumeResult<string, string> cr)
+        {
+            const string RETRY_HEADER = "retryCount";
+            const string ORIGINAL_TOPIC_NAME = "originalTopic";
+            const int RETRY_MAX = 3;
 
-        //private Type GetEventGenericType(IEventProcessor ec)
-        //{
-        //    return ((Type[])((TypeInfo)ec.GetType()).ImplementedInterfaces)[0].GenericTypeArguments[0];
-        //}
+            var retryCount = 0;
+            var originalTopic = cr.Topic;
+
+            if (cr.Headers.TryGetLastBytes(RETRY_HEADER, out byte[] b))
+                retryCount = BitConverter.ToInt32(b, 0);
+
+            if (cr.Headers.TryGetLastBytes(ORIGINAL_TOPIC_NAME, out byte[] b2))
+                originalTopic = System.Text.Encoding.UTF8.GetString(b2);
+
+            if (retryCount == RETRY_MAX)
+            {
+                await new KafkaProducerFluent<T>()
+                    .AddBroker(_brokerList.ToArray())
+                    .ProduceAsStringAsync(cr.Key, cr.Value, $"{originalTopic}.dlq", cr.Headers);
+            }
+            else
+            {
+                cr.Headers.Remove(RETRY_HEADER);
+                cr.Headers.Remove(ORIGINAL_TOPIC_NAME);
+
+                cr.Headers.Add(RETRY_HEADER, BitConverter.GetBytes(++retryCount));
+                cr.Headers.Add(ORIGINAL_TOPIC_NAME, System.Text.Encoding.UTF8.GetBytes(originalTopic));
+
+                await new KafkaProducerFluent<T>()
+                    .AddBroker(_brokerList.ToArray())
+                    .ProduceAsStringAsync(cr.Key, cr.Value, $"{originalTopic}.retry.{retryCount}", cr.Headers);
+            }
+        }
 
         private class InternalEvent : IEventProcessor<T>
         {

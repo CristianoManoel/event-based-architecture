@@ -1,0 +1,24 @@
+<div class="room">
+  <!-- <h2>{{roomId}}</h2> -->
+  <div class="infos">
+    <div class="actions">
+      <button (click)="subscribe()" *ngIf="!hasSubcribe">Subscribe</button>
+      <button (click)="unSubscribe()" *ngIf="hasSubcribe">UnSubscribe</button>
+      <button (click)="clear()" *ngIf="hasSubcribe">Clear</button>
+    </div>
+
+    <div class="settings">
+      <textarea [(ngModel)]="consumerSettigns"></textarea>
+    </div>
+  </div>
+
+  <div #scrollBottom class="messages">
+    <ul class="list">
+      <li class="user-message" *ngFor="let message of messages">
+        <span [ngClass]="{'error': message.hasError}">{{ message.message }} ({{ message.id }})</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="clear"></div>

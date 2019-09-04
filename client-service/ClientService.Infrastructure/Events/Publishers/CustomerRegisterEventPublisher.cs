@@ -2,9 +2,8 @@
 using ClientService.Core.Entities;
 using ClientService.Infrastructure.Configuration;
 using ClientService.Infrastructure.Configurations;
-using System;
-using ServiceBus.Kafka;
 using ClientService.Core.Events.Publishers;
+using ServiceBus;
 
 namespace ClientService.Infrastructure.ServiceBus.Publishers
 {

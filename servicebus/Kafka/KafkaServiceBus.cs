@@ -2,6 +2,7 @@
 using ServiceBus.Events;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ServiceBus.Kafka
@@ -13,7 +14,7 @@ namespace ServiceBus.Kafka
             
         }
 
-        public async void SubscribeAsync<T>(ConsumerSettings settings, IEventProcessor<T> eventConsumer, Action<Exception> errorHandler = null)
+        public async void SubscribeAsync<T>(ConsumerSettings settings, IEventProcessor<T> eventConsumer, Action<Exception> errorHandler = null, CancellationToken cancellationToken = default)
         {
             await Task.Run(() =>
             {
@@ -21,11 +22,11 @@ namespace ServiceBus.Kafka
                     .Success(eventConsumer)
                     .WithConfig(settings)
                     .Error(errorHandler)
-                    .Subscribe();
+                    .Subscribe(cancellationToken: cancellationToken);
             });
         }
 
-        public async void PublishAsync<T>(ProducerSettings settings, string key, T data, Action success = null, Action<Exception> errorHandler = null)
+        public async Task PublishAsync<T>(ProducerSettings settings, string key, T data, Action success = null, Action<Exception> errorHandler = null)
         {
             await Task.Run(() =>
             {

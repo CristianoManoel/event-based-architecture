@@ -8,10 +8,9 @@ using ClientService.Infrastructure.Configurations;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using ServiceBus.Kafka;
 using ClientService.Core.Events.Processors;
+using ServiceBus;
 
 namespace ClientService.Infrastructure.Workers
 {

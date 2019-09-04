@@ -4,6 +4,7 @@ using ClientService.Core.Events.Publishers;
 using Notification.Infrastructure.Configurations;
 using Notification.Core.Entities;
 using Notification.Infrastructure.Configuration;
+using ServiceBus;
 
 namespace Notification.Infrastructure.ServiceBus.Publishers
 {
