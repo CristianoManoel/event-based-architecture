@@ -5,25 +5,38 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using ServiceBus.Events;
+using ServiceBus.Extensions;
+using System.Threading.Tasks;
 
 namespace ServiceBus.Kafka
 {
     public class KafkaConsumerFluent<T>
     {
+        private const string ORIGINAL_TOPIC = "original.topic";
+        private const string GROUP_ID = "group.id";
+        private const string RETRY_TIMESTAMP = "retry.timestamp";
+        private const string RETRY_COUNT = "retry.count";
+        private const string DLQ = "dlq";
+        private const string DELAY = "delay";
+        private const int MAX_RETRY = 3;
+
         private readonly List<string> _brokerList = new List<string>();
 
         private Action<Exception> _error;
         private string _topicName;
+        private string _topicNameRepublish;
         private string _groupId;
         private bool _enableAutoCommit;
         private AutoOffsetReset _autoOffSetReset;
         private bool? _enablePartionEof;
         private int _maxPollIntervalMs;
         private IEventProcessor<T> _eventConsumer;
+        private int _delay;
 
         public KafkaConsumerFluent()
         {
             this._maxPollIntervalMs = 60000;
+            // this._maxPollIntervalMs = 10000;
         }
 
         #region Fluent setters
@@ -43,6 +56,8 @@ namespace ServiceBus.Kafka
             EnableAutoCommit(config.EnableAutoCommit);
             AutoOffSetReset(config.AutoOffSetReset);
             EnablePartionEof(config.EnablePartionEof);
+            TopicRepublish(config.TopicRepublish);
+            Delay(config.Delay);
 
             if (config.MaxPollIntervalMs > 0)
                 MaxPollIntervalMs(config.MaxPollIntervalMs);
@@ -56,6 +71,18 @@ namespace ServiceBus.Kafka
                 throw new ArgumentNullException(nameof(groupId));
 
             this._groupId = groupId;
+            return this;
+        }
+
+        public KafkaConsumerFluent<T> TopicRepublish(string topicName)
+        {
+            this._topicNameRepublish = topicName;
+            return this;
+        }
+
+        public KafkaConsumerFluent<T> Delay(int delay)
+        {
+            this._delay = delay;
             return this;
         }
 
@@ -124,6 +151,9 @@ namespace ServiceBus.Kafka
             {
                 if (cancellationToken != default)
                 {
+                    // Garante que ao cancelar a task, ocorra o unsubscribe, do contrário, 
+                    // o cursor ficará preso na linha "c.Subscribe(...)" e o cancel() só terá efeito após retorno do kafka 
+                    // que pode demorar minutos até o próximo looping do while.
                     cancellationToken.Register(() =>
                     {
                         c.Unsubscribe();
@@ -152,49 +182,111 @@ namespace ServiceBus.Kafka
 
                 try
                 {
-                    while (!cancellationToken.IsCancellationRequested)
+                    while (cancellationToken == default || !cancellationToken.IsCancellationRequested)
                     {
                         ConsumeResult<string, string> cr = null;
 
                         try
                         {
+
                             cr = c.Consume();
+                            // c.Pause(new List<TopicPartition>() { cr.TopicPartition });
 
-                            if (!cr.IsPartitionEOF)
+                            if (cr.IsPartitionEOF)
+                                continue;
+
+
+                            /* 
+                                Deve ler a mensagem após 10 segundos da sua produção. Exemplo
+
+                                -> Delay: 10 segundos
+                                -> Produzido: 1s 2s 3s 4s 5s 6s 7s 8s 9s 10s 11s 12s
+                                -> Consumido:           ^
+                                -> Após 10s :                                     ^
+
+                                1) Obtem a diferença do tempo de consumo menos o tempo de produção
+                                   (4s - 2s) = 2 (o tempo de consumo será sempre maior, pois é o tempo atual)
+                                2) Descobre o tempo faltante para deixar a thead dormindo
+                                   (10s - (4s - 2s)) = 8s (substrai o tempo do delay com o tempo gasto da msg para chegar até chegar aqui)
+                            */
+                            var delay = _delay;
+                            // if (cr.Headers.TryGetValueInt32(DELAY, out int d))
+                            //     delay = d;
+
+                            if (delay > 0)
                             {
-                                //var args = new SubscribeEventArgs();                                
-                                var data = JsonConvert.DeserializeObject<T>(cr.Value);
-                                _eventConsumer.Subscribe(data);
+                                var currentUnixTs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                                var sleep = (int)(delay - (currentUnixTs - cr.Timestamp.UnixTimestampMs));
+                                if (sleep > 0)
+                                {
+                                    c.Pause(c.Assignment);
 
-                                if (!config.EnableAutoCommit.Value)
-                                    c.Commit();
+                                    // Caso utilize cancelation token, utilize o WaitOne.
+                                    // garanta que saia do método após o cancelamento.
+                                    if (cancellationToken == default)
+                                        Thread.Sleep(sleep);
+                                    else if (cancellationToken.WaitHandle.WaitOne(sleep))
+                                        return;
+
+
+                                    c.Resume(c.Assignment);
+                                }
                             }
 
-                            //else
-                            //{
-                            //Console.WriteLine($"End of Partion Reached.");
-                            //}
+                            //cr.Headers.AddOrUpdate(RETRY_TIMESTAMP, _delay);
+
+                            // Caso o grupo de consumo dessa mensagem exista (pois é uma mensagem com erro)
+                            // verifica se o grupo de consumo atual é igual ao grupo de consumo original da mensagem
+                            // caso não seja, então ignore a mensagem. Isso é feito para evitar que consumidores
+                            // do mesmo tópico com grupo de consumo diferentes e que não geraram erro para está mensagem
+                            // tenham que reprocessa-la.
+                            var canProcess = true;
+                            if (cr.Headers.TryGetValueString(GROUP_ID, out string messageGroupId) && messageGroupId != _groupId)
+                                canProcess = false;
+
+                            if (canProcess)
+                            {
+                                // Caso esse consumidor tenha tópico de republish, é recomendado não
+                                // usar nenhum processor. Caso use, esse processor não pode gerar
+                                // exception, do contrário não será feito o republish.  
+                                if (_eventConsumer != null)
+                                {
+                                    var data = JsonConvert.DeserializeObject<T>(cr.Value);
+                                    _eventConsumer.Subscribe(data);
+                                }
+
+                                // Republica a mensagem em outro topico. É usado em tópicos de retry
+                                // que devem voltar as mensagens de volta para o tópico original.
+                                // Cria uma proteção para não deixar que tópicos DLQ reenviem para o 
+                                // tópico original, isso apenas evita problemas quando alguem se inscreve
+                                // em tópicos DQL.
+                                if (!string.IsNullOrWhiteSpace(this._topicNameRepublish)
+                                    && !cr.Headers.ExistsKey(DLQ)
+                                )
+                                {
+                                    var a = cr.Timestamp;
+                                    Republish(cr, this._topicNameRepublish);
+                                }
+                            }
+
+                            if (!config.EnableAutoCommit.Value)
+                                c.Commit();
+
                         }
                         catch (Exception e)
                         {
                             if (_error == null)
-                            {
                                 if (e is ConsumeException ce)
                                     Console.WriteLine($"Error occured: {ce.Error.Reason}");
                                 else
                                     Console.WriteLine($"Error occured: {e.Message}");
-                            }
                             else
-                            {
                                 _error.Invoke(e);
-                            }
 
                             if (cr != null)
                                 this.AddRetry(cr);
                         }
                     }
-
-                    // c.Unsubscribe();
                 }
                 catch (OperationCanceledException)
                 {
@@ -206,37 +298,47 @@ namespace ServiceBus.Kafka
 
         private async void AddRetry(ConsumeResult<string, string> cr)
         {
-            const string RETRY_HEADER = "retryCount";
-            const string ORIGINAL_TOPIC_NAME = "originalTopic";
-            const int RETRY_MAX = 3;
+            // Se já está no tópico de mensagens mortas, então saia
+            if (cr.Headers.ExistsKey(DLQ))
+                return;
 
-            var retryCount = 0;
-            var originalTopic = cr.Topic;
+            // caso seja a primeira leitura com erro dessa mensagem, então
+            // adiciona o nome original do grupo de consumidor para que somente esse grupo
+            // de consumidor possa ler essa mensagem futuramente
+            if (!cr.Headers.ExistsKey(GROUP_ID))
+                cr.Headers.AddOrUpdate(GROUP_ID, _groupId);
 
-            if (cr.Headers.TryGetLastBytes(RETRY_HEADER, out byte[] b))
-                retryCount = BitConverter.ToInt32(b, 0);
-
-            if (cr.Headers.TryGetLastBytes(ORIGINAL_TOPIC_NAME, out byte[] b2))
-                originalTopic = System.Text.Encoding.UTF8.GetString(b2);
-
-            if (retryCount == RETRY_MAX)
+            // caso seja a primeira leitura com erro dessa mensagem, então
+            // adiciona o nome original do topico
+            if (!cr.Headers.TryGetValueString(ORIGINAL_TOPIC, out string originalTopic))
             {
-                await new KafkaProducerFluent<T>()
-                    .AddBroker(_brokerList.ToArray())
-                    .ProduceAsStringAsync(cr.Key, cr.Value, $"{originalTopic}.dlq", cr.Headers);
+                originalTopic = cr.Topic;
+                cr.Headers.AddOrUpdate(ORIGINAL_TOPIC, originalTopic);
+            }
+
+            cr.Headers.TryGetValueInt32(RETRY_COUNT, out int retryCount);
+
+            string topic;
+            if (retryCount == MAX_RETRY)
+            {
+                cr.Headers.AddOrUpdate(DLQ, true);
+                topic = $"{originalTopic}.dlq";
             }
             else
             {
-                cr.Headers.Remove(RETRY_HEADER);
-                cr.Headers.Remove(ORIGINAL_TOPIC_NAME);
+                cr.Headers.AddOrUpdate(RETRY_COUNT, ++retryCount);
 
-                cr.Headers.Add(RETRY_HEADER, BitConverter.GetBytes(++retryCount));
-                cr.Headers.Add(ORIGINAL_TOPIC_NAME, System.Text.Encoding.UTF8.GetBytes(originalTopic));
-
-                await new KafkaProducerFluent<T>()
-                    .AddBroker(_brokerList.ToArray())
-                    .ProduceAsStringAsync(cr.Key, cr.Value, $"{originalTopic}.retry.{retryCount}", cr.Headers);
+                topic = $"{originalTopic}.retry.{retryCount}";
             }
+
+            await Republish(cr, topic);
+        }
+
+        private async Task Republish(ConsumeResult<string, string> cr, string topic)
+        {
+            await new KafkaProducerFluent<string>()
+                .AddBroker(_brokerList.ToArray())
+                .ProduceAsync(cr.Key, cr.Value, topic, cr.Headers);
         }
 
         private class InternalEvent : IEventProcessor<T>

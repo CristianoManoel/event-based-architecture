@@ -1,5 +1,6 @@
-import { Component, Inject, OnInit, Input } from '@angular/core';
+import { Component, Inject, OnInit, Input, ViewChildren, QueryList } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { ChatRoomComponent } from '../chat-room/chat-room.component';
 
 @Component({
   selector: 'app-home',
@@ -7,6 +8,9 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
+  @ViewChildren(ChatRoomComponent)
+  rooms: QueryList<ChatRoomComponent>
+
   public message: string;
   public publisherSettigns: string;
 
@@ -40,5 +44,23 @@ export class HomeComponent implements OnInit {
       error => {
         console.error(error);
       });
+  }
+
+  public subscribeAll() {
+    var array = this.rooms.toArray();
+    for(var i in array)
+      array[i].subscribe();
+  }
+
+  public unSubscribeAll() {
+    var array = this.rooms.toArray();
+    for(var i in array)
+      array[i].unSubscribe();
+  }
+
+  public clearAll() {
+    var array = this.rooms.toArray();
+    for(var i in array)
+      array[i].clear();
   }
 }

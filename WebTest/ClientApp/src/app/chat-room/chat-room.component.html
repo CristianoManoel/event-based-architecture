@@ -2,22 +2,26 @@
   <!-- <h2>{{roomId}}</h2> -->
   <div class="infos">
     <div class="actions">
-      <button (click)="subscribe()" *ngIf="!hasSubcribe">Subscribe</button>
-      <button (click)="unSubscribe()" *ngIf="hasSubcribe">UnSubscribe</button>
-      <button (click)="clear()" *ngIf="hasSubcribe">Clear</button>
+      <button (click)="subscribe()" *ngIf="!hasSubcribe" [disabled]="this.loading">Subscribe</button>
+      <button (click)="unSubscribe()" *ngIf="hasSubcribe" [disabled]="this.loading">UnSubscribe</button>
+      <button (click)="clear()">Clear</button>
     </div>
 
     <div class="settings">
-      <textarea [(ngModel)]="consumerSettigns"></textarea>
+      <textarea [(ngModel)]="consumerSettigns" [disabled]="this.loading || hasSubcribe"></textarea>
     </div>
   </div>
 
   <div #scrollBottom class="messages">
-    <ul class="list">
+    <ol class="list">
       <li class="user-message" *ngFor="let message of messages">
         <span [ngClass]="{'error': message.hasError}">{{ message.message }} ({{ message.id }})</span>
+        <!-- <ul>
+          <li>SendDate: {{ message.sendDate }}</li>
+          <li>ReceiveDate: {{ message.receiveDate }}</li>
+        </ul> -->
       </li>
-    </ul>
+    </ol>
   </div>
 </div>
 

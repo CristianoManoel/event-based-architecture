@@ -37,11 +37,16 @@ namespace ServiceBus.Kafka
 
         public async Task<DeliveryResult<string, string>> ProduceAsync(string key, T data, string topicName = null, Headers headers = null)
         {
-            var serializedData = JsonConvert.SerializeObject(data);
-            return await ProduceAsStringAsync(key, serializedData, topicName, headers);
+            string dataString;
+            if (data is string d)
+                dataString = d;
+            else 
+                dataString = JsonConvert.SerializeObject(data);
+
+            return await ProduceAsStringAsync(key, dataString, topicName, headers);
         }
 
-        public async Task<DeliveryResult<string, string>> ProduceAsStringAsync(string key, string data, string topicName = null, Headers headers = null)
+        private async Task<DeliveryResult<string, string>> ProduceAsStringAsync(string key, string data, string topicName = null, Headers headers = null)
         {
             if (_brokerList.Count == 0)
                 throw new InvalidOperationException($"One broker must be added to build a consumer. Use the {nameof(AddBroker)} method to add a broker!");

@@ -5,16 +5,66 @@
 
     <div class="data">
         <textarea [(ngModel)]="message"></textarea>
-        
+
     </div>
 
     <div class="actions">
         <button (click)="send()">Enviar</button>
     </div>
+
+    <div class="clear"></div>
+
+    <div class="multi-actions">
+        <button (click)="subscribeAll()">Subscribe All</button>
+        <button (click)="unSubscribeAll()">UnSubscribe All</button>
+        <button (click)="clearAll()">Clear all</button>
+    </div>
 </div>
 
-<app-chat-room roomId="room1" topic="Chat"></app-chat-room>
-<app-chat-room roomId="room2" topic="Chat.retry.1"></app-chat-room>
-<app-chat-room roomId="room3" topic="Chat.retry.2"></app-chat-room>
-<app-chat-room roomId="room4" topic="Chat.retry.3"></app-chat-room>
-<app-chat-room roomId="room4" topic="Chat.dlq"></app-chat-room>
+<!--
+    Modelo: UBER
+    Link: https://eng.uber.com/reliable-reprocessing/
+          https://imasters.com.br/desenvolvimento/construindo-reprocessamento-confiavel-e-dead-letter-queues-com-kafka
+    Prós:    
+    Contras:
+-->
+<!-- <div>
+    <app-chat-room roomId="room1" groupId="g1" topic="Chat"></app-chat-room>
+    <app-chat-room roomId="room2" groupId="g2" topic="Chat"></app-chat-room>
+
+    <app-chat-room roomId="room3" groupId="g1" topic="Chat.retry.1" topicRepublish="Chat" delay="5000"></app-chat-room>
+    <app-chat-room roomId="room4" groupId="g2" topic="Chat.retry.1" topicRepublish="Chat" delay="5000"></app-chat-room>
+
+    <app-chat-room roomId="room5" groupId="g1" topic="Chat.retry.2" topicRepublish="Chat" delay="10000"></app-chat-room>
+    <app-chat-room roomId="room6" groupId="g2" topic="Chat.retry.2" topicRepublish="Chat" delay="10000"></app-chat-room>
+
+    <app-chat-room roomId="room7" groupId="g1" topic="Chat.retry.3" topicRepublish="Chat" delay="15000"></app-chat-room>
+    <app-chat-room roomId="room8" groupId="g2" topic="Chat.retry.3" topicRepublish="Chat" delay="15000"></app-chat-room>
+
+    <app-chat-room roomId="room9" groupId="g1" topic="Chat.dlq"></app-chat-room>
+    <app-chat-room roomId="room10" groupId="g2" topic="Chat.dlq"></app-chat-room>
+</div> -->
+
+<!--
+    Modelo: X
+    Link: https://medium.com/naukri-engineering/retry-mechanism-and-delay-queues-in-apache-kafka-528a6524f722
+          https://blog.pragmatists.com/retrying-consumer-architecture-in-the-apache-kafka-939ac4cb851a
+    Prós:    
+    Contras:
+-->
+<div>
+    <app-chat-room roomId="room1" groupId="g1" topic="Chat"></app-chat-room>
+    <app-chat-room roomId="room2" groupId="g2" topic="Chat"></app-chat-room>
+
+    <app-chat-room roomId="room3" groupId="g1" topic="Chat.retry.1" delay="5000"></app-chat-room>
+    <app-chat-room roomId="room4" groupId="g2" topic="Chat.retry.1" delay="5000"></app-chat-room>
+
+    <app-chat-room roomId="room5" groupId="g1" topic="Chat.retry.2" delay="10000"></app-chat-room>
+    <app-chat-room roomId="room6" groupId="g2" topic="Chat.retry.2" delay="10000"></app-chat-room>
+
+    <app-chat-room roomId="room7" groupId="g1" topic="Chat.retry.3" delay="15000"></app-chat-room>
+    <app-chat-room roomId="room8" groupId="g2" topic="Chat.retry.3" delay="15000"></app-chat-room>
+
+    <app-chat-room roomId="room9" groupId="g1" topic="Chat.dlq"></app-chat-room>
+    <app-chat-room roomId="room10" groupId="g2" topic="Chat.dlq"></app-chat-room>
+</div>

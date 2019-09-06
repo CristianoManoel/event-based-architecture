@@ -13,6 +13,7 @@ export class ChatRoomComponent implements OnInit, AfterViewChecked {
   public messages: ChatMessage[];
   private hubConnection: signalR.HubConnection;
   private hasSubcribe: boolean;
+  private loading: boolean;
 
   @ViewChild('scrollBottom')
   private myScrollContainer: ElementRef;
@@ -21,21 +22,40 @@ export class ChatRoomComponent implements OnInit, AfterViewChecked {
   public roomId: string;
 
   @Input()
+  public groupId: string;
+
+  @Input()
   public topic: string;
+
+  @Input()
+  public topicRepublish: string;
+
+  @Input()
+  public delay: number;
 
   constructor(private http: HttpClient, @Inject('BASE_URL') private baseUrl: string) {
     this.messages = new Array<ChatMessage>();
   }
 
   ngOnInit() {
-    this.consumerSettigns = JSON.stringify({
-      "BootstrapServers": "localhost:9092",
-      "GroupId": "gid-chat",
-      "EnableAutoCommit": true,
-      "AutoOffSetReset": 0,
-      "EnablePartionEof": true,
-      "Topic": this.topic
-    }, null, 2);
+    let obj: ConsumerSettigns = {
+      bootstrapServers: "localhost:9092",
+      groupId: this.groupId,
+      enableAutoCommit: true,
+      autoOffSetReset: 0,
+      enablePartionEof: true,
+      topic: this.topic,
+      topicRepublish: this.topicRepublish,
+      delay: this.delay
+    };
+
+    if (!this.topicRepublish)
+      delete obj.topicRepublish;
+
+    if (!this.delay)
+      delete obj.delay;
+
+    this.consumerSettigns = JSON.stringify(obj, null, 2);
   }
 
   ngAfterViewChecked() {
@@ -43,6 +63,7 @@ export class ChatRoomComponent implements OnInit, AfterViewChecked {
   }
 
   public subscribe() {
+    this.loading = true;
     var request = JSON.parse(this.consumerSettigns);
 
     this.http.post(this.baseUrl + `api/Chat/Subscribe?roomId=${this.roomId}`, request).subscribe(
@@ -51,18 +72,23 @@ export class ChatRoomComponent implements OnInit, AfterViewChecked {
       },
       error => {
         console.error(error);
+        this.loading = false;
       }
     );
   }
 
   public unSubscribe() {
+    this.loading = true;
+    
     this.http.get(this.baseUrl + `api/Chat/UnSubscribe?roomId=${this.roomId}`).subscribe(
       result => {
         this.hasSubcribe = false;
         this.hubConnection.stop();
+        this.loading = false;
       },
       error => {
         console.error(error);
+        this.loading = false;
       }
     );
   }
@@ -86,6 +112,8 @@ export class ChatRoomComponent implements OnInit, AfterViewChecked {
         this.hubConnection.invoke("AddToGroup", this.roomId)
           .then(() => {
             this.hasSubcribe = true;
+            this.loading = false;
+
             this.hubConnection.on('chat', (msg: ChatMessage) => {
               console.log(msg);
               this.messages.push(msg);
@@ -99,9 +127,13 @@ export class ChatRoomComponent implements OnInit, AfterViewChecked {
           })
           .catch(err => {
             console.log(err);
+            this.loading = false;
           });
       })
-      .catch(err => console.log('Error while starting connection: ' + err));
+      .catch(err => {
+        this.loading = false;
+        console.log('Error while starting connection: ' + err);
+      });
   }
 
   scrollToBottom(): void {
@@ -113,7 +145,8 @@ export class ChatRoomComponent implements OnInit, AfterViewChecked {
 
 interface ChatMessage {
   id: string;
-  date: Date;
+  sendDate: Date;
+  receiveDate: Date;
   message: string;
   roomId: string;
   hasError: boolean;
@@ -122,8 +155,10 @@ interface ChatMessage {
 interface ConsumerSettigns {
   bootstrapServers: string;
   groupId: string;
-  enableAutoCommit: string;
-  autoOffSetReset: string;
-  enablePartionEof: string;
+  enableAutoCommit: boolean;
+  autoOffSetReset: number;
+  enablePartionEof: boolean;
   topic: string;
+  topicRepublish: string;
+  delay: number;
 }

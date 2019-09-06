@@ -22,6 +22,10 @@ div.infos {
         padding-bottom: 12px;
     }
 
+    div.infos .actions button:disabled {
+        background-color: gray;
+    }
+
     div.infos .settings {
         width: 340px;
         height: 177px;
@@ -32,13 +36,18 @@ div.infos {
             height: 100%;
         }
 
+        div.infos .settings textarea:disabled {
+            background-color: gray;
+        }
+
 div.messages {
     overflow-y: scroll;
     height: 100%;
     color: white;
+    font-size: 11px;
 }
 
     div.messages span.error {
-        background-color: red;
+        color: red;
         font-weight: bold;
     }

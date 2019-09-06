@@ -9,5 +9,7 @@ namespace ServiceBus.Configurations
         public int AutoOffSetReset { get; set; }
         public bool EnablePartionEof { get; set; }
         public int MaxPollIntervalMs { get; set; }
+        public string TopicRepublish { get; set; }
+        public int Delay { get; set; }
     }
 }
